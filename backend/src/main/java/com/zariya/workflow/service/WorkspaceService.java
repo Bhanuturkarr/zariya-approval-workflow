@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,14 +20,16 @@ import java.util.*;
 
 @Service
 public class WorkspaceService {
+    private static final Logger logger = LoggerFactory.getLogger(WorkspaceService.class);
     private static final Set<String> STAGES = Set.of("Intake", "Review", "Documents", "EVC", "Decision", "Compliance", "Approved");
     private static final Set<String> DOC_STATUSES = Set.of("Pending", "Received", "Verified");
     private final ApplicationRepository applications;
     private final AlertRepository alerts;
     private final AuditRepository audit;
+    private final EmailNotificationService emailNotifications;
 
-    public WorkspaceService(ApplicationRepository applications, AlertRepository alerts, AuditRepository audit) {
-        this.applications = applications; this.alerts = alerts; this.audit = audit;
+    public WorkspaceService(ApplicationRepository applications, AlertRepository alerts, AuditRepository audit, EmailNotificationService emailNotifications) {
+        this.applications = applications; this.alerts = alerts; this.audit = audit; this.emailNotifications = emailNotifications;
     }
 
     @Transactional(readOnly = true)
@@ -133,6 +137,11 @@ public class WorkspaceService {
             var alert = new AlertRecord(days < 0 ? "urgent" : "", title, app.getCaseId() + " · " + app.getInstitution(), time);
             alerts.save(alert);
             allAlerts.add(alert);
+            try {
+                emailNotifications.sendDeadlineAlert(app, alert);
+            } catch (RuntimeException error) {
+                logger.warn("Email notification could not be sent for {}. The in-app alert remains available.", app.getCaseId());
+            }
             if (days < 0) record("System", "escalated overdue action", app.getCaseId(), "Regional Director notified");
         }
     }

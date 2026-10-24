@@ -16,6 +16,7 @@ The frontend is published at <https://bhanuturkarr.github.io/zariya-approval-wor
 - Monitor regional document-completion rates and export the queue to CSV
 - Keep a responsive dashboard usable on desktop and mobile
 - Run deadline alert generation on the API when a case is due within two days or overdue
+- Optionally email new deadline alerts through a configured SMTP server
 
 Sample institutions and activity are illustrative only. The demo does not connect to AICTE systems and does not provide production authentication or regulatory decision-making.
 
@@ -41,3 +42,7 @@ To run only the static browser demo, use the live demo link above. It saves chan
 - `PATCH /api/alerts/{id}/acknowledge` acknowledges an alert.
 
 The backend CI workflow compiles and verifies the Spring Boot project with Java 21. The Pages workflow builds the frontend and publishes the `docs` artifact on pushes to `main`.
+
+### Optional email alerts
+
+The database-backed dashboard works without email setup. To send each newly generated deadline alert to a team inbox, set `EMAIL_NOTIFICATIONS_ENABLED=true`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `EMAIL_FROM` and `EMAIL_RECIPIENTS` in the API environment. `EMAIL_RECIPIENTS` accepts comma-separated addresses. Keep SMTP credentials private; do not add them to the repository. The default Compose setup leaves email disabled.
