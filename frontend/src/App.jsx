@@ -82,7 +82,8 @@ export default function App() {
   const createApplication = async (event) => {
     event.preventDefault();
     if (!form.institution.trim()) { setToastText('Enter an institution name.'); return; }
-    const result = await mutate('/api/applications', 'POST', form, data => {
+    const payload = { ...form, dueDate: form.dueDate || null };
+    const result = await mutate('/api/applications', 'POST', payload, data => {
       const nextNum = 440 + data.applications.length + 1;
       const app = { ...form, id: Date.now(), caseId: `AICTE/26/${nextNum}`, stage: 'Intake', documents: [{ name: 'Application form', status: 'Received' }, { name: 'Faculty details', status: 'Pending' }, { name: 'Infrastructure report', status: 'Pending' }] };
       return { ...data, applications: [app, ...data.applications], audit: [{ id: Date.now(), actor: 'Zariya', action: 'created application and routed it to', caseId: app.caseId, detail: `${app.region} regional office`, createdAt: 'Just now' }, ...(data.audit || [])] };
